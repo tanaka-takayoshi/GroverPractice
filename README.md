@@ -12,6 +12,8 @@
 > dotnet run
 ```
 
+`dotnet run`で実行できない場合は、.NET Core SDKおよびQuantum Development Kitがインストールされていない可能性があります。[Q# の開発環境を準備する (.NET Core CLI + Visual Studio Code編)](https://tech.tanaka733.net/entry/2018/10/quantum-installconfig-with-vscode)を参考にしてインストールしてください。
+
 Driver.csは編集する必要はありません。
 Operations.qsはメソッド定義とヒント(TODO)が書いてあるので、TODOの箇所を埋めていってください。
 
