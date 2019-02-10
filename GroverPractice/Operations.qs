@@ -20,8 +20,7 @@
         mutable resultElement = new Result[nDatabaseQubits];
         
         // TODO データベースに使うビット数+1の量子ビットを確保
-        //using (qubits = Qubit[nDatabaseQubits + 1]) {
-        using (qubits = Qubit[0]) {
+        using (qubits = Qubit[nDatabaseQubits + 1]) {
             // indexが0のものを"マークされた量子ビット"として使う
             let markedQubitIndex = 0;
             
@@ -31,12 +30,12 @@
             //(QuantumSearchWithCanon(nIterations, markedQubitIndex))(qubits);
 
             // TODO データベースの状態を測定して、Result[] の配列を取得する
-            // mutable resultAllBits = MultiM(qubits);
-            // set resultSuccess = resultAllBits[markedQubitIndex];
-            // set resultElement = Exclude([markedQubitIndex], resultAllBits);
+            mutable resultAllBits = MultiM(qubits);
+            set resultSuccess = resultAllBits[markedQubitIndex];
+            set resultElement = Exclude([markedQubitIndex], resultAllBits);
             
             // TODO すべての量子ビットの状態を0にする
-            //ResetAll(qubits);
+            ResetAll(qubits);
         }
         
         // 測定結果を返す
@@ -58,20 +57,18 @@
         // TODO  Qubit配列 qubits で、IndexがidxMarkedQubitのものをmarkedQubitとする
         // 残りのqubitsをdatabaseRegisterとする。
         // idxMarkedQubitは0に固定してあるので、0しかこないものとして処理してもよいです。
-        let markedQubit = qubits[0]; //TODO qubits[0]を書き直してください
+        let markedQubit = qubits[idxMarkedQubit]; //TODO qubits[0]を書き直してください
         // HINT Exclude を使います
-        let databaseRegister = qubits;　//TODO qubitsを書き直してください
-        // let markedQubit = qubits[idxMarkedQubit];
-        // let databaseRegister = Exclude([idxMarkedQubit], qubits);
-
+        let databaseRegister = Exclude([idxMarkedQubit], qubits);　//TODO qubitsを書き直してください
+        
         //初期状態を生成する
         StatePreparationOracle(markedQubit, databaseRegister);
         
         // TODO 指定された回数だけ確率振幅増幅を行う
         // ReflectMarked と ReflectStart を使います
         for (idx in 0 .. nIterations - 1) {
-            // ReflectMarked(markedQubit);
-            // ReflectStart(markedQubit, databaseRegister);
+            ReflectMarked(markedQubit);
+            ReflectStart(markedQubit, databaseRegister);
         }
     }
     
@@ -89,8 +86,8 @@
         //その場合関数本体は body (...){}の中に記述します
         body (...) {
             //TODO UniformSuperpositionOracle と DatabaseOracle を使います
-            // UniformSuperpositionOracle(databaseRegister);
-            // DatabaseOracle(markedQubit, databaseRegister);
+            UniformSuperpositionOracle(databaseRegister);
+            DatabaseOracle(markedQubit, databaseRegister);
         }
         
         adjoint invert;
@@ -107,7 +104,7 @@
         body (...) {
             //TODO for文を使って書けますが、１つのoperationで記述することもできます
 
-            // ApplyToEachCA(H, databaseRegister);
+            ApplyToEachCA(H, databaseRegister);
             // もしくは
             // let nQubits = Length(databaseRegister);
             
@@ -134,7 +131,7 @@
         body (...) {
             //TODO Q#ではControlled functorをoperationに修飾することで、
             //第一引数が|1..1>のときだけoperationを適用することができます。
-            // Controlled X(databaseRegister, markedQubit);
+            Controlled X(databaseRegister, markedQubit);
         }
         
         adjoint invert;
@@ -152,7 +149,7 @@
         
         // TODO R1 operation
         // https://docs.microsoft.com/en-us/qsharp/api/prelude/microsoft.quantum.primitive.r1?view=qsharp-preview
-        //R1(PI(), markedQubit);
+        R1(PI(), markedQubit);
     }
     
     
@@ -164,17 +161,17 @@
     /// データベースの量子ビット列
     operation ReflectZero (databaseRegister : Qubit[]) : Unit {
         // TODO 
-        // let nQubits = Length(databaseRegister);
+        let nQubits = Length(databaseRegister);
         
-        // for (idxQubit in 0 .. nQubits - 1) {
-        //     X(databaseRegister[idxQubit]);
-        // }
+        for (idxQubit in 0 .. nQubits - 1) {
+            X(databaseRegister[idxQubit]);
+        }
         
-        // Controlled Z(databaseRegister[1 .. nQubits - 1], databaseRegister[0]);
+        Controlled Z(databaseRegister[1 .. nQubits - 1], databaseRegister[0]);
         
-        // for (idxQubit in 0 .. nQubits - 1) {
-        //     X(databaseRegister[idxQubit]);
-        // }
+        for (idxQubit in 0 .. nQubits - 1) {
+            X(databaseRegister[idxQubit]);
+        }
     }
     
     
@@ -189,9 +186,9 @@
     operation ReflectStart (markedQubit : Qubit, databaseRegister : Qubit[]) : Unit {
         // TODO StatePreparationOracle と ReflectZero を使います
         // HINT operationの逆の操作はAdjointで修飾することで適用できます
-        // Adjoint StatePreparationOracle(markedQubit, databaseRegister);
-        // ReflectZero([markedQubit] + databaseRegister);
-        // StatePreparationOracle(markedQubit, databaseRegister);
+        Adjoint StatePreparationOracle(markedQubit, databaseRegister);
+        ReflectZero([markedQubit] + databaseRegister);
+        StatePreparationOracle(markedQubit, databaseRegister);
     }
 
     /// ここから先はAmpAmpByOracle を使う場合のコード
@@ -224,14 +221,14 @@
         
         body (...) {
             // TODO 
-            // let flagQubit = startQubits[idxMarkedQubit];
-            // let databaseRegister = Exclude([idxMarkedQubit], startQubits);
+            let flagQubit = startQubits[idxMarkedQubit];
+            let databaseRegister = Exclude([idxMarkedQubit], startQubits);
             
             // TODO すべての状態が均等に現れる状態を生成する
-            //ApplyToEachCA(H, databaseRegister);
+            ApplyToEachCA(H, databaseRegister);
             
             // TODO オラクル関数を適用する
-            //DatabaseOracle(flagQubit, databaseRegister);
+            DatabaseOracle(flagQubit, databaseRegister);
         }
         
         adjoint invert;
